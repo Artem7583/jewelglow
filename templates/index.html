@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="brands-carousel">
+    <div class="brands-carousel">
+        <h2>Элегантные ювелирные изделия</h2>
+        <div class="carousel-container">
+            <div class="carousel-track">
+                <div class="carousel-slide">
+                    <a href="{{ url_for('category', category_name='rings') }}">
+                        <img src="{{ url_for('static', filename='images/brand1.png') }}" alt="Brand 1">
+                    </a>
+                </div>
+                <div class="carousel-slide">
+                    <a href="{{ url_for('category', category_name='earrings') }}">
+                        <img src="{{ url_for('static', filename='images/brand2.png') }}" alt="Brand 2">
+                    </a>
+                </div>
+                <div class="carousel-slide">
+                    <a href="{{ url_for('category', category_name='bracelets') }}">
+                        <img src="{{ url_for('static', filename='images/brand3.png') }}" alt="Brand 3">
+                    </a>
+                </div>
+                <div class="carousel-slide">
+                    <a href="{{ url_for('category', category_name='pendants') }}">
+                        <img src="{{ url_for('static', filename='images/brand4.png') }}" alt="Brand 4">
+                    </a>
+                </div>
+                <div class="carousel-slide">
+                    <a href="{{ url_for('category', category_name='watches') }}">
+                        <img src="{{ url_for('static', filename='images/brand5.jpg') }}" alt="Brand 5">
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="popular-products">
+        <h2>Популярные товары</h2>
+        {% if products %}
+        <div class="products-container">
+            {% for product in products %}
+            <div class="product-card">
+                <a href="{{ url_for('product_detail', product_id=product.id) }}" class="product-link">
+                    <img src="{{ url_for('static', filename=product.image) }}" alt="{{ product.name }}">
+                    <h3>{{ product.name }}</h3>
+                    <p class="product-price">{{ product.price|format_currency }} ₽</p>
+                </a>
+                <form class="add-to-cart-form" data-product-id="{{ product.id }}">
+                    <button type="submit" class="add-to-cart-btn">Добавить в корзину</button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="no-products">Популярные товары появятся здесь скоро!</p>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Обработка добавления в корзину
+    document.querySelectorAll('.add-to-cart-form').forEach(form => {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const productId = this.dataset.productId;
+            
+            try {
+                const response = await fetch('/api/add_to_cart', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({product_id: productId})
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    // Показываем уведомление
+                    const notification = document.createElement('div');
+                    notification.className = 'cart-notification';
+                    notification.textContent = data.message || 'Товар добавлен в корзину!';
+                    document.body.appendChild(notification);
+                    
+                    // Удаляем уведомление через 3 секунды
+                    setTimeout(() => {
+                        notification.classList.add('fade-out');
+                        setTimeout(() => notification.remove(), 300);
+                    }, 3000);
+                    
+                    // Обновляем счетчик корзины (если есть)
+                    const cartCounter = document.getElementById('cart-counter');
+                    if (cartCounter) {
+                        cartCounter.textContent = data.cart_count;
+                    }
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+            }
+        });
+    });
+});
+</script>
+
+{% endblock %}

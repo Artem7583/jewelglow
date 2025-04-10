@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="qr-page-container">
+    <h1 class="page-title">Свяжитесь с нами</h1>
+    <p class="page-subtitle">Наша команда всегда готова помочь вам</p>
+
+    <div class="qr-codes">
+        <!-- QR код 1 -->
+        <div class="qr-item">
+            <img src="{{ url_for('static', filename='images/qr/qr1.jpg') }}" alt="QR код Telegram" class="qr-image">
+            <div class="qr-name">Смирнов Владислав</div>
+        </div>
+
+        <!-- QR код 2 -->
+        <div class="qr-item">
+            <img src="{{ url_for('static', filename='images/qr/qr2.jpg') }}" alt="QR код Telegram" class="qr-image">
+            <div class="qr-name">Баландин Лев</div>
+        </div>
+
+        <!-- QR код 3 -->
+        <div class="qr-item">
+            <img src="{{ url_for('static', filename='images/qr/qr3.jpg') }}" alt="QR код Telegram" class="qr-image">
+            <div class="qr-name">Первов Артем</div>
+        </div>
+
+        <!-- QR код 4 -->
+        <div class="qr-item">
+            <img src="{{ url_for('static', filename='images/qr/qr4.jpg') }}" alt="QR код Telegram" class="qr-image">
+            <div class="qr-name">Мартенс Никита</div>
+        </div>
+
+        <!-- QR код 5 -->
+        <div class="qr-item">
+            <img src="{{ url_for('static', filename='images/qr/qr5.jpg') }}" alt="QR код Telegram" class="qr-image">
+            <div class="qr-name">Рукосуев Владислав</div>
+        </div>
+    </div>
+</div>
+{% endblock %}

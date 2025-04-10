@@ -1,0 +1,366 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="game-layout">
+  <!-- Блок с правилами (слева) -->
+  <div class="game-rules">
+    <h3>Правила игры:</h3>
+    <ul>
+      <li>Управление: клавиши ← и → или кнопки на экране</li>
+      <li>Ловите падающие скидки (1% и 2%)</li>
+      <li>Избегайте бомб 💣 — они обнулят ваш результат</li>
+      <li>Скидка действует на один заказ</li>
+    </ul>
+    
+    {% if current_user.has_discount %}
+      {% if current_user.discount_used %}
+        <p class="discount-status used">Вы уже использовали свою скидку {{ current_user.discount_value }}%</p>
+      {% else %}
+        <p class="discount-status active">Ваша текущая скидка: {{ current_user.discount_value }}%</p>
+      {% endif %}
+    {% endif %}
+  </div>
+
+  <!-- Игровое поле (по центру) -->
+  <div class="game-area-wrapper">
+    <div class="game-area">
+      <div class="game-timer">10</div>
+      <div class="game-score">0%</div>
+      <div class="game-message"></div>
+      <div class="wolf"></div>
+      <button class="game-start-btn">Начать игру</button>
+      <div class="game-controls-info">Движение: стрелки ← и →</div>
+      <div class="game-mobile-controls">
+        <div class="game-mobile-btn" id="left-btn">←</div>
+        <div class="game-mobile-btn" id="right-btn">→</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Пустой блок справа (для будущего контента) -->
+  <div class="game-sidebar"></div>
+</div>
+
+
+<script>
+  const gameArea = document.querySelector('.game-area');
+  const wolf = document.querySelector('.wolf');
+  const timerElement = document.querySelector('.game-timer');
+  const scoreElement = document.querySelector('.game-score');
+  const messageElement = document.querySelector('.game-message');
+  const startBtn = document.querySelector('.game-start-btn');
+  const controlsInfo = document.querySelector('.game-controls-info');
+  const mobileControls = document.querySelector('.game-mobile-controls');
+  const leftBtn = document.getElementById('left-btn');
+  const rightBtn = document.getElementById('right-btn');
+
+  let wolfX = gameArea.offsetWidth / 2 - wolf.offsetWidth / 2;
+  let wolfY = gameArea.offsetHeight - wolf.offsetHeight - 20;
+  let gameOver = false;
+  let wolfSpeed = 7;
+  let keys = {};
+  let totalDiscount = 0;
+  const MAX_DISCOUNT = 10;
+  let gameTime = 10;
+  let fallingItems = [];
+  let gameInterval;
+  let isMobile = false;
+  let touchId = null;
+  let touchStartX = 0;
+
+  function checkIfMobile() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  }
+
+  function setupMobileControls() {
+    isMobile = checkIfMobile();
+    if (isMobile) {
+      mobileControls.style.display = 'flex';
+      
+      leftBtn.addEventListener('touchstart', () => { keys['ArrowLeft'] = true; });
+      leftBtn.addEventListener('touchend', () => { keys['ArrowLeft'] = false; });
+      leftBtn.addEventListener('touchcancel', () => { keys['ArrowLeft'] = false; });
+      
+      rightBtn.addEventListener('touchstart', () => { keys['ArrowRight'] = true; });
+      rightBtn.addEventListener('touchend', () => { keys['ArrowRight'] = false; });
+      rightBtn.addEventListener('touchcancel', () => { keys['ArrowRight'] = false; });
+    }
+  }
+
+  function startGame() {
+    startBtn.style.display = 'none';
+    controlsInfo.style.display = 'none';
+    wolf.style.display = 'block';
+    timerElement.style.display = 'block';
+    scoreElement.style.display = 'block';
+    if (isMobile) mobileControls.style.display = 'flex';
+    
+    gameOver = false;
+    totalDiscount = 0;
+    gameTime = 10;
+    timerElement.textContent = gameTime;
+    scoreElement.textContent = '0%';
+    wolfX = gameArea.offsetWidth / 2 - wolf.offsetWidth / 2;
+    wolf.style.left = wolfX + 'px';
+    
+    document.querySelectorAll('.discount, .bomb, .big-discount').forEach(el => el.remove());
+    fallingItems = [];
+    
+    updateTimer();
+    moveWolf();
+    
+    gameInterval = setInterval(() => {
+      createDiscount();
+      if (Math.random() > 0.7) createBigDiscount();
+      if (Math.random() > 0.5) createBomb();
+    }, 800);
+  }
+
+  function updateTimer() {
+    if (gameOver) return;
+    
+    gameTime--;
+    timerElement.textContent = gameTime;
+    
+    if (gameTime <= 0) {
+      endGame(`Время вышло!<br>Ваша скидка: ${totalDiscount}%`);
+    } else {
+      setTimeout(updateTimer, 1000);
+    }
+  }
+
+  function moveWolf() {
+    if (gameOver) return;
+    
+    if (keys['ArrowLeft'] && wolfX > 0) {
+      wolfX -= wolfSpeed;
+    }
+    if (keys['ArrowRight'] && wolfX < gameArea.offsetWidth - wolf.offsetWidth) {
+      wolfX += wolfSpeed;
+    }
+    
+    wolf.style.left = wolfX + 'px';
+    requestAnimationFrame(moveWolf);
+  }
+
+  function checkCollision(item, itemX, itemY, isBomb = false) {
+    const wolfRect = wolf.getBoundingClientRect();
+    const gameRect = gameArea.getBoundingClientRect();
+    
+    const itemLeft = itemX + gameRect.left;
+    const itemRight = itemLeft + item.offsetWidth;
+    const itemTop = itemY + gameRect.top;
+    const itemBottom = itemTop + item.offsetHeight;
+    
+    if (
+      itemBottom >= wolfRect.top &&
+      itemTop <= wolfRect.bottom &&
+      itemRight >= wolfRect.left &&
+      itemLeft <= wolfRect.right
+    ) {
+      if (isBomb) {
+        endGame('Вы поймали бомбу!<br>Скидка: 0%');
+        return true;
+      } else if (!item.classList.contains('big-discount')) {
+        const discountValue = parseInt(item.textContent);
+        totalDiscount += discountValue;
+        scoreElement.textContent = `${totalDiscount}%`;
+        
+        if (totalDiscount >= MAX_DISCOUNT) {
+          totalDiscount = MAX_DISCOUNT;
+          endGame(`Поздравляем!<br>Максимальная скидка ${MAX_DISCOUNT}%!`);
+        }
+        
+        item.remove();
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function createDiscount() {
+    if (gameOver) return;
+    const discount = document.createElement('div');
+    discount.classList.add('discount');
+    discount.textContent = `${Math.random() > 0.5 ? 2 : 1}%`;
+    let discountX = Math.random() * (gameArea.offsetWidth - 40);
+    let discountY = 0;
+    discount.style.left = discountX + 'px';
+    discount.style.top = discountY + 'px';
+    gameArea.appendChild(discount);
+
+    const itemId = Date.now();
+    fallingItems.push({id: itemId, element: discount});
+
+    function drop() {
+      if (gameOver) return;
+      discountY += 3;
+      discount.style.top = discountY + 'px';
+      
+      if (checkCollision(discount, discountX, discountY)) {
+        const index = fallingItems.findIndex(item => item.id === itemId);
+        if (index !== -1) fallingItems.splice(index, 1);
+        return;
+      }
+      
+      if (discountY > gameArea.offsetHeight) {
+        discount.remove();
+        const index = fallingItems.findIndex(item => item.id === itemId);
+        if (index !== -1) fallingItems.splice(index, 1);
+      } else {
+        requestAnimationFrame(drop);
+      }
+    }
+    requestAnimationFrame(drop);
+  }
+
+  function createBigDiscount() {
+    if (gameOver) return;
+    const discount = document.createElement('div');
+    discount.classList.add('big-discount');
+    discount.textContent = "50%";
+    let discountX = Math.random() * (gameArea.offsetWidth - 50);
+    let discountY = 0;
+    discount.style.left = discountX + 'px';
+    discount.style.top = discountY + 'px';
+    gameArea.appendChild(discount);
+
+    const itemId = Date.now();
+    fallingItems.push({id: itemId, element: discount});
+    let escapeTriggered = false;
+    const escapeHeight = gameArea.offsetHeight - 150;
+
+    function drop() {
+      if (gameOver) return;
+      
+      if (!escapeTriggered) {
+        discountY += 2;
+        
+        if (discountY >= escapeHeight) {
+          escapeTriggered = true;
+        }
+      } else {
+        if (discountX > wolfX) {
+          discountX += 6;
+        } else {
+          discountX -= 6;
+        }
+        
+        discountY += 1;
+      }
+      
+      discount.style.left = discountX + 'px';
+      discount.style.top = discountY + 'px';
+      
+      if (discountY > gameArea.offsetHeight || 
+          discountX < -100 || 
+          discountX > gameArea.offsetWidth + 100) {
+        discount.remove();
+        const index = fallingItems.findIndex(item => item.id === itemId);
+        if (index !== -1) fallingItems.splice(index, 1);
+      } else {
+        requestAnimationFrame(drop);
+      }
+    }
+    requestAnimationFrame(drop);
+  }
+
+  function createBomb() {
+    if (gameOver) return;
+    const bomb = document.createElement('div');
+    bomb.classList.add('bomb');
+    bomb.textContent = "💣";
+    let bombX = Math.random() * (gameArea.offsetWidth - 40);
+    let bombY = 0;
+    bomb.style.left = bombX + 'px';
+    bomb.style.top = bombY + 'px';
+    gameArea.appendChild(bomb);
+
+    const itemId = Date.now();
+    fallingItems.push({id: itemId, element: bomb});
+
+    function drop() {
+      if (gameOver) return;
+      bombY += 4;
+      bomb.style.top = bombY + 'px';
+      
+      if (checkCollision(bomb, bombX, bombY, true)) {
+        const index = fallingItems.findIndex(item => item.id === itemId);
+        if (index !== -1) fallingItems.splice(index, 1);
+        return;
+      }
+      
+      if (bombY > gameArea.offsetHeight) {
+        bomb.remove();
+        const index = fallingItems.findIndex(item => item.id === itemId);
+        if (index !== -1) fallingItems.splice(index, 1);
+      } else {
+        requestAnimationFrame(drop);
+      }
+    }
+    requestAnimationFrame(drop);
+  }
+
+  function endGame(message) {
+    gameOver = true;
+    clearInterval(gameInterval);
+    
+    document.querySelectorAll('.discount, .bomb, .big-discount').forEach(el => el.remove());
+    fallingItems = [];
+    
+    messageElement.innerHTML = message;
+    messageElement.style.display = 'block';
+    if (isMobile) mobileControls.style.display = 'none';
+    
+    if (totalDiscount > 0 && !message.includes('бомбу')) {
+      fetch('/api/save_discount', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ discount: totalDiscount })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          setTimeout(() => window.location.reload(), 3000);
+        }
+      });
+    }
+    
+    setTimeout(() => {
+      messageElement.style.display = 'none';
+      startBtn.style.display = 'block';
+      controlsInfo.style.display = 'block';
+    }, 3000);
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (['ArrowLeft', 'ArrowRight'].includes(e.key)) {
+      keys[e.key] = true;
+    }
+  });
+  
+  document.addEventListener('keyup', (e) => {
+    if (['ArrowLeft', 'ArrowRight'].includes(e.key)) {
+      keys[e.key] = false;
+    }
+  });
+
+  window.addEventListener('load', () => {
+    setupMobileControls();
+    startBtn.addEventListener('click', startGame);
+    
+    function resizeGame() {
+      const container = document.querySelector('.game-container');
+      const width = Math.min(window.innerWidth, 500);
+      const height = Math.min(window.innerHeight, 500);
+      container.style.width = width + 'px';
+      container.style.height = height + 'px';
+    }
+    
+    resizeGame();
+    window.addEventListener('resize', resizeGame);
+  });
+</script>
+{% endblock %}

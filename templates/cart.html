@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="cart-container">
+    
+    {% if not cart_items %}
+        <div class="empty-cart">
+            <p>Ваша корзина пуста</p>
+            <a href="{{ url_for('index') }}" class="gold-btn">Вернуться к покупкам</a>
+        </div>
+    {% else %}
+        <div class="cart-items">
+            {% for item in cart_items %}
+            <div class="cart-item" data-price="{{ item.price }}">
+                <div class="cart-item-image">
+                    <img src="{{ url_for('static', filename=item.image) if item.image else url_for('static', filename='images/no-image.png') }}" alt="{{ item.name }}">
+                </div>
+                <div class="cart-item-details">
+                    <h3>{{ item.name }}</h3>
+                    <p class="price">{{ item.price|format_currency }} ₽</p>
+                </div>
+                <div class="cart-item-quantity">
+                    <input type="number" 
+                           class="quantity-input" 
+                           data-cart-item-id="{{ item.id }}" 
+                           value="{{ item.quantity }}" 
+                           min="1">
+                </div>
+                <div class="cart-item-total">
+                    {{ (item.price * item.quantity)|format_currency }} ₽
+                </div>
+                <button class="gold-btn remove-from-cart" data-cart-item-id="{{ item.id }}">
+                    Удалить
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="cart-summary">
+            <div class="cart-total">
+                Итого: {{ total|format_currency }} ₽
+            </div>
+            <a href="{{ url_for('checkout') if current_user.is_authenticated else url_for('login', next=url_for('view_cart')) }}" 
+               class="gold-btn checkout-btn">
+                Оформить заказ
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<script src="{{ url_for('static', filename='js/cart.js') }}"></script>
+{% endblock %}

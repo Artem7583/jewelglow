@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="category-header">
+    <div class="category-top">
+        <h1 class="category-name">
+            {% if category_name == 'rings' %}Кольца
+            {% elif category_name == 'earrings' %}Серьги
+            {% elif category_name == 'bracelets' %}Браслеты
+            {% elif category_name == 'pendants' %}Подвески
+            {% elif category_name == 'watches' %}Часы
+            {% else %}{{ category_name|capitalize }}{% endif %}
+        </h1>
+        
+        {% if category_name == 'rings' %}
+            <img src="{{ url_for('static', filename='images/Brand1.png') }}" alt="Кольца" class="category-brand-logo">
+            <p class="category-slogan">Элегантные кольца для особых моментов</p>
+        {% elif category_name == 'earrings' %}
+            <img src="{{ url_for('static', filename='images/Brand2.png') }}" alt="Серьги" class="category-brand-logo">
+            <p class="category-slogan">Изысканные серьги для завершения образа</p>
+        {% elif category_name == 'bracelets' %}
+            <img src="{{ url_for('static', filename='images/Brand3.png') }}" alt="Браслеты" class="category-brand-logo">
+            <p class="category-slogan">Стильные браслеты для вашего запястья</p>
+        {% elif category_name == 'pendants' %}
+            <img src="{{ url_for('static', filename='images/Brand4.png') }}" alt="Подвески" class="category-brand-logo">
+            <p class="category-slogan">Уникальные подвески - выражение индивидуальности</p>
+        {% elif category_name == 'watches' %}
+            <img src="{{ url_for('static', filename='images/Brand5.jpg') }}" alt="Часы" class="category-brand-logo">
+            <p class="category-slogan">Премиальные часы - точность и статус</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="category-container">
+    {% if current_user.is_admin %}
+        <div class="admin-actions">
+            <a href="{{ url_for('admin_add_product') }}" class="btn btn-primary">Добавить товар</a>
+        </div>
+    {% endif %}
+    
+    <div class="products-grid">
+        {% for product in products %}
+        <div class="product-card">
+            <a href="{{ url_for('product_detail', product_id=product.id) }}">
+                {% if product.image %}
+                <img src="{{ url_for('static', filename=product.image) }}" alt="{{ product.name }}" class="product-img">
+                {% else %}
+                <div class="no-image">Нет изображения</div>
+                {% endif %}
+                <h3>{{ product.name }}</h3>
+                <p class="price">{{ product.price|format_currency }} ₽</p>
+            </a>
+        </div>
+        {% else %}
+        <p class="no-products">В этой категории пока нет товаров</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,50 @@
+
+{% extends "base.html" %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/partners.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="partners-page">
+    <h1 class="partners-title">Наши партнеры</h1>
+    <p class="partners-subtitle">Эксклюзивные ювелирные бренды</p>
+
+    <div class="partners-grid">
+        <a href="{{ url_for('brand1') }}" class="partner-card">
+            <img src="{{ url_for('static', filename='images/brand1.png') }}" 
+                 alt="Rukosuev Art" 
+                 class="partner-logo"> 
+        </a>
+        
+        <a href="{{ url_for('brand2') }}" class="partner-card">
+            <img src="{{ url_for('static', filename='images/brand2.png') }}" 
+                 alt="Balance & Martenz" 
+                 class="partner-logo">
+
+        </a>
+        
+        <a href="{{ url_for('brand3') }}" class="partner-card">
+            <img src="{{ url_for('static', filename='images/brand3.png') }}" 
+                 alt="Smirnoff Next" 
+                 class="partner-logo">
+ 
+        </a>
+        
+        <a href="{{ url_for('brand4') }}" class="partner-card">
+            <img src="{{ url_for('static', filename='images/brand4.png') }}" 
+                 alt="Pervov Brilliant" 
+                 class="partner-logo">
+
+        </a>
+        
+        <a href="{{ url_for('brand5') }}" class="partner-card">
+            <img src="{{ url_for('static', filename='images/Brand5.jpg') }}" 
+                 alt="Balan" 
+                 class="partner-logo">
+
+        </a>
+    </div>
+</div>
+{% endblock %}
+[file content end]

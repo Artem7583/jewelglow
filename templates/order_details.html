@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="order-details-container">
+    <h1 class="order-title">Заказ #{{ order.id }}</h1>
+    
+    <div class="order-info">
+        <div class="info-block">
+            <h3>Информация о заказе</h3>
+            <p><strong>Дата заказа:</strong> 
+                {{ order.order_date.strftime('%d.%m.%Y %H:%M') if order.order_date else 'Дата не указана' }}
+            </p>
+            <p><strong>Статус:</strong> 
+                <span class="status-{{ order.status|lower if order.status else 'unknown' }}">
+                    {{ order.status|default('Статус неизвестен', true) }}
+                </span>
+            </p>
+            <p><strong>Ожидаемая дата доставки:</strong> 
+                {{ order.delivery_date.strftime('%d.%m.%Y') if order.delivery_date else 'Не указана' }}
+            </p>
+            <p><strong>Способ оплаты:</strong> {{ order.payment_method|default('Не указан', true) }}</p>
+            <p><strong>Общая сумма:</strong> {{ order.total_amount|default(0)|format_currency }} ₽</p>
+        </div>
+        
+        <div class="info-block">
+            <h3>Адрес доставки</h3>
+            <p>{{ order.shipping_address|default('Не указан', true) }}</p>
+            {% if order.notes %}
+            <h3>Примечания</h3>
+            <p>{{ order.notes }}</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="order-items">
+        <h2>Товары в заказе</h2>
+        
+        {% for item in items %}
+        <div class="order-item">
+            <div class="item-image">
+                <img src="{{ url_for('static', filename=item.Product.image) if item.Product.image else url_for('static', filename='images/no-image.png') }}" alt="{{ item.Product.name }}">
+            </div>
+            <div class="item-details">
+                <h3>{{ item.Product.name }}</h3>
+                <p class="price">
+                    {{ item.OrderItem.price|default(0)|format_currency }} ₽ × {{ item.OrderItem.quantity|default(1) }} шт.
+                </p>
+            </div>
+            <div class="item-total">
+                {{ (item.OrderItem.price|default(0) * item.OrderItem.quantity|default(1))|format_currency }} ₽
+            </div>
+        </div>
+        {% endfor %}
+        
+        <div class="order-total">
+            <span>Итого:</span>
+            <span>{{ order.total_amount|default(0)|format_currency }} ₽</span>
+        </div>
+    </div>
+    
+    <div class="order-actions">
+        <a href="{{ url_for('orders') }}" class="btn btn-primary">Вернуться к списку заказов</a>
+    </div>
+</div>
+{% endblock %}

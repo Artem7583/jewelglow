@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="orders-container">
+    <h1 class="orders-title">Мои заказы</h1>
+    
+    {% if orders %}
+    <div class="orders-list">
+        {% for order in orders %}
+        <div class="order-card">
+            <div class="order-header">
+                <span class="order-number">Заказ #{{ order.id }}</span>
+                <span class="order-date">
+                    {{ order.order_date.strftime('%d.%m.%Y %H:%M') if order.order_date else 'Дата не указана' }}
+                </span>
+                <span class="order-status {{ order.status|lower if order.status else 'unknown' }}">
+                    {{ order.status|default('Статус неизвестен', true) }}
+                </span>
+                <span class="order-total">
+                    {{ order.total_amount|default(0)|format_currency }} ₽
+                </span>
+            </div>
+            
+            <div class="order-delivery">
+                <i class="fas fa-truck"></i>
+                {% if order.status == 'Доставлен' and order.delivery_date %}
+                    <span>Доставлен {{ order.delivery_date.strftime('%d.%m.%Y') }}</span>
+                {% elif order.status == 'Отправлен' and order.delivery_date %}
+                    <span>Ожидается доставка до {{ order.delivery_date.strftime('%d.%m.%Y') }}</span>
+                {% else %}
+                    <span>Ожидается отправка</span>
+                {% endif %}
+            </div>
+            
+            <div class="order-footer">
+                <a href="{{ url_for('order_details', order_id=order.id) }}" class="btn btn-primary">Подробнее</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-orders">
+        <p>У вас пока нет заказов</p>
+        <a href="{{ url_for('index') }}" class="btn btn-primary">Вернуться к покупкам</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

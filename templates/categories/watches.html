@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="category-content">
+    <div class="category-header" style="text-align: center;">
+        <img src="{{ url_for('static', filename='images/Brand5.jpg') }}" 
+             alt="Brand5" 
+             class="category-brand-logo"
+             style="display: block; margin: 0 auto; filter: none;">
+        
+        <h1 class="category-title">Часы</h1>
+        <p class="category-description">Премиальные часы - точность и статус</p>
+        
+        {% if current_user.is_authenticated and current_user.is_seller and current_user.category_permission == 'watches' %}
+        <div class="seller-actions">
+            <a href="{{ url_for('admin_add_product') }}" class="btn btn-primary">
+                Добавить товар
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="products-container">
+        {% for product in products %}
+        <div class="product-card">
+            <a href="{{ url_for('product_detail', product_id=product.id) }}" class="product-link">
+                <img src="{{ url_for('static', filename=product.image) }}" alt="{{ product.name }}">
+                <h3>{{ product.name }}</h3>
+                <p class="product-price">{{ product.price|format_currency }} ₽</p>
+            </a>
+            <form class="add-to-cart-form" data-product-id="{{ product.id }}">
+                <button type="submit" class="add-to-cart-btn">Добавить в корзину</button>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.add-to-cart-form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const productId = this.dataset.productId;
+            addToCart(e, productId);
+        });
+    });
+});
+</script>
+{% endblock %}

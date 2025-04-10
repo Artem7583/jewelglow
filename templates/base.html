@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JewelGlow - Элегантные украшения</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header class="main-header">
+        <div class="header-top">
+            <div class="logo-container">
+                <a href="{{ url_for('index') }}" class="logo-link" style="text-decoration: none; color: inherit;">
+                    <div class="logo">JewelGlow</div>
+                    <div class="slogan">Сияние вашей индивидуальности</div>
+                </a>
+            </div>
+            
+            <!-- Поиск товаров - перемещен перед навигацией -->
+            <div class="search-container">
+                <form action="{{ url_for('search') }}" method="GET" class="search-form">
+                    <input type="text" name="query" placeholder="Поиск товаров..." class="search-input">
+                    <button type="submit" class="search-button">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                        </svg>
+                    </button>
+                </form>
+            </div>
+            
+            <nav class="main-nav">
+                <a href="{{ url_for('index') }}" class="nav-link">Главная</a>
+                <div class="dropdown">
+                    <button class="nav-link dropbtn">Категории</button>
+                    <div class="dropdown-content">
+                        <a href="{{ url_for('category', category_name='rings') }}">Кольца</a>
+                        <a href="{{ url_for('category', category_name='earrings') }}">Серьги</a>
+                        <a href="{{ url_for('category', category_name='bracelets') }}">Браслеты</a>
+                        <a href="{{ url_for('category', category_name='pendants') }}">Подвески</a>
+                        <a href="{{ url_for('category', category_name='watches') }}">Часы</a>
+                    </div>
+                </div>
+                <a href="{{ url_for('bonus') }}" class="nav-link">Бонусы</a>
+                <a href="{{ url_for('view_cart') }}" class="nav-link cart-link">
+                    Корзина
+                    {% if cart_count > 0 %}
+                        <span class="cart-count">{{ cart_count }}</span>
+                    {% endif %}
+                </a>
+                {% if current_user.is_authenticated %}
+                    {% if current_user.is_admin %}
+                    <a href="{{ url_for('admin_add_product') }}" class="nav-link">Добавить товар</a>
+                    {% endif %}
+                    <a href="{{ url_for('orders') }}" class="nav-link">Заказы</a>
+                    <a href="{{ url_for('logout') }}" class="nav-link">Выйти</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="nav-link">Вход</a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="main-footer">
+        <div class="footer-content">
+            <a href="{{ url_for('about') }}" class="footer-link">О нас</a>
+            <a href="{{ url_for('qr') }}" class="footer-link">Связаться с нами</a>
+            <a href="{{ url_for('partner') }}" class="footer-link">Наши партнеры</a>
+        </div>
+        <div class="copyright">© 2025 JewelGlow. Все права защищены.</div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/dropdown.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/carousel.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/cart.js') }}"></script>
+</body>
+</html>

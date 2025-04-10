@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="checkout-container">
+    <h1 class="checkout-title">Оформление заказа</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    
+    <div class="checkout-content">
+        <div class="checkout-items">
+            <h2>Ваш заказ</h2>
+            
+            {% for item in cart_items %}
+            <div class="checkout-item">
+                <div class="item-image">
+                    <img src="{{ url_for('static', filename=item.Product.image) if item.Product.image else url_for('static', filename='images/no-image.png') }}" alt="{{ item.Product.name }}">
+                </div>
+                <div class="item-details">
+                    <h3>{{ item.Product.name }}</h3>
+                    <p class="price">
+                        {{ item.Product.price|default(0)|format_currency }} ₽ × {{ item.Cart.quantity }} шт.
+                    </p>
+                </div>
+                <div class="item-total">
+                    {{ (item.Product.price * item.Cart.quantity)|format_currency }} ₽
+                </div>
+            </div>
+            {% endfor %}
+            
+            <div class="order-summary">
+                <div class="summary-row">
+                    <span>Подытог:</span>
+                    <span>{{ total|default(0)|format_currency }} ₽</span>
+                </div>
+                
+                {% if has_discount %}
+                <div class="summary-row discount-row" id="discount-row" style="display: none;">
+                    <span>Скидка {{ discount_value }}%:</span>
+                    <span>-{{ (total * discount_value / 100)|format_currency }} ₽</span>
+                </div>
+                {% endif %}
+                
+                <div class="summary-row total-row">
+                    <span>Итого к оплате:</span>
+                    <span id="total-amount">{{ total|default(0)|format_currency }} ₽</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="checkout-form">
+            <h2>Контактная информация</h2>
+            
+            <form method="POST" action="{{ url_for('checkout') }}">
+                <div class="form-group">
+                    <label for="phone">Телефон*</label>
+                    <input 
+                        type="tel" 
+                        id="phone" 
+                        name="phone" 
+                        required 
+                        pattern="^\+7\d{10}$" 
+                        placeholder="+7XXXXXXXXXX"
+                        title="Введите номер в формате +7XXXXXXXXXX"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="city">Город*</label>
+                    <input type="text" id="city" name="city" required placeholder="Москва">
+                </div>
+
+                <div class="form-group">
+                    <label for="street">Улица*</label>
+                    <input type="text" id="street" name="street" required placeholder="Тверская">
+                </div>
+
+                <div class="form-group">
+                    <label for="house">Дом*</label>
+                    <input type="text" id="house" name="house" required placeholder="10">
+                </div>
+
+                <div class="form-group">
+                    <label for="apartment">Квартира</label>
+                    <input type="text" id="apartment" name="apartment" placeholder="5">
+                </div>
+                
+                <div class="form-group">
+                    <label>Способ оплаты*</label>
+                    <div class="payment-methods">
+                        <div class="payment-method">
+                            <input type="radio" id="cash" name="payment" value="Наличные при получении" checked>
+                            <label for="cash">Наличные при получении</label>
+                        </div>
+                        <div class="payment-method">
+                            <input type="radio" id="card" name="payment" value="Банковская карта">
+                            <label for="card">Банковская карта</label>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if has_discount %}
+                <div class="form-group discount-option">
+                    <input type="checkbox" id="use_discount" name="use_discount">
+                    <label for="use_discount">Использовать мою скидку {{ discount_value }}%</label>
+                </div>
+                {% endif %}
+                
+                <div class="form-group">
+                    <label for="notes">Примечания к заказу</label>
+                    <textarea id="notes" name="notes" rows="3"></textarea>
+                </div>
+                
+                <button type="submit" class="gold-btn">Подтвердить заказ</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    const discountCheckbox = document.getElementById('use_discount');
+    if (discountCheckbox) {
+        discountCheckbox.addEventListener('change', function() {
+            const discountRow = document.getElementById('discount-row');
+            const totalAmount = document.getElementById('total-amount');
+            const subtotal = parseFloat("{{ total|default(0) }}");
+            const discountValue = parseFloat("{{ discount_value|default(0) }}");
+            
+            if (discountRow && totalAmount) {
+                if (this.checked) {
+                    discountRow.style.display = 'flex';
+                    const discountedTotal = subtotal * (1 - discountValue / 100);
+                    totalAmount.textContent = discountedTotal.toLocaleString('ru-RU', {
+                        style: 'currency',
+                        currency: 'RUB',
+                        minimumFractionDigits: 2
+                    });
+                } else {
+                    discountRow.style.display = 'none';
+                    totalAmount.textContent = subtotal.toLocaleString('ru-RU', {
+                        style: 'currency',
+                        currency: 'RUB',
+                        minimumFractionDigits: 2
+                    });
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}
