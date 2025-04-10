@@ -37,5 +37,5 @@ jobs:
 
       - name: Run tests
         env:
-          DATABASE_URL: postgresql://postgres:123@localhost:5432/jewelglow_test
+          DATABASE_URL: postgresql://postgres:123@localhost:5432/JewelGlow
         run: pytest
